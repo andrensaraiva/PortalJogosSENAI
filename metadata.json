@@ -1,0 +1,5 @@
+{
+  "name": "SENAI Vitória Game Port",
+  "description": "A portfolio platform for game development students at SENAI Vitória, featuring a Steam-like interface and web-based game playback.",
+  "requestFramePermissions": []
+}

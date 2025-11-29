@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Galeria de Talentos - SENAI Vitória</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              senai: {
+                blue: '#00A9FF',
+                dark: '#0f172a',
+                darker: '#020617',
+                card: '#1e293b',
+                accent: '#0ea5e9',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Rajdhani', 'sans-serif'],
+              retro: ['"Press Start 2P"', 'cursive'],
+            },
+            backgroundImage: {
+              'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Add Google Fonts: Inter/Rajdhani for Porto, Press Start 2P for Retro -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Rajdhani:wght@500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+      /* --- PORTO THEME (Default) --- */
+      body {
+        background-color: #050b14;
+        background-image: 
+          radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 60%),
+          linear-gradient(rgba(0, 169, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 169, 255, 0.03) 1px, transparent 1px);
+        background-size: 100% 100%, 40px 40px, 40px 40px;
+        background-attachment: fixed;
+        color: #e2e8f0;
+        font-family: 'Inter', sans-serif;
+        transition: background 0.5s ease;
+      }
+
+      .text-glow {
+        text-shadow: 0 0 10px rgba(0, 169, 255, 0.5);
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+        background: #020617;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 5px;
+        border: 2px solid #020617;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #00A9FF;
+      }
+      
+      .glass-panel {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      
+      .glass-card {
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .glass-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        border-color: rgba(0, 169, 255, 0.5);
+        box-shadow: 0 10px 30px -10px rgba(0, 169, 255, 0.3);
+      }
+
+      /* --- RETRO THEME OVERRIDES --- */
+      .theme-retro {
+        --retro-green: #33ff00;
+        --retro-bg: #000000;
+        --retro-dark: #111;
+        font-family: 'Press Start 2P', cursive !important;
+      }
+
+      .theme-retro body, .theme-retro .min-h-screen {
+        background-color: var(--retro-bg) !important;
+        background-image: 
+          linear-gradient(rgba(51, 255, 0, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(51, 255, 0, 0.1) 1px, transparent 1px) !important;
+        background-size: 20px 20px, 20px 20px !important;
+        color: var(--retro-green) !important;
+      }
+
+      /* Force squares (8-bit style) */
+      .theme-retro * {
+        border-radius: 0px !important;
+        letter-spacing: 0px !important;
+      }
+
+      /* Typography Overrides */
+      .theme-retro h1, .theme-retro h2, .theme-retro h3, .theme-retro h4, .theme-retro h5, .theme-retro h6 {
+        font-family: 'Press Start 2P', cursive !important;
+        text-transform: uppercase !important;
+        text-shadow: 2px 2px 0px #003300 !important;
+        line-height: 1.5 !important;
+      }
+      
+      .theme-retro p, .theme-retro span, .theme-retro div, .theme-retro a, .theme-retro button, .theme-retro input, .theme-retro textarea, .theme-retro select {
+        font-family: 'Press Start 2P', cursive !important;
+      }
+
+      /* Component Overrides for Retro */
+      .theme-retro .glass-panel, 
+      .theme-retro .glass-card, 
+      .theme-retro nav, 
+      .theme-retro aside div,
+      .theme-retro section {
+        background: #000 !important;
+        border: 2px solid var(--retro-green) !important;
+        backdrop-filter: none !important;
+        box-shadow: 4px 4px 0px var(--retro-green) !important;
+      }
+
+      .theme-retro .glass-card:hover {
+        transform: translate(-2px, -2px) !important;
+        box-shadow: 6px 6px 0px var(--retro-green) !important;
+      }
+
+      /* Color replacements */
+      .theme-retro .text-senai-blue { color: var(--retro-green) !important; }
+      .theme-retro .bg-senai-blue { background-color: var(--retro-green) !important; color: black !important; }
+      .theme-retro .border-senai-blue { border-color: var(--retro-green) !important; }
+      
+      .theme-retro .text-gray-300, .theme-retro .text-gray-400, .theme-retro .text-gray-500 {
+        color: #aaddaa !important;
+      }
+
+      .theme-retro button, .theme-retro a.button {
+        border: 2px solid var(--retro-green) !important;
+        background: black !important;
+        color: var(--retro-green) !important;
+        box-shadow: 2px 2px 0px var(--retro-green) !important;
+      }
+      
+      .theme-retro button:hover, .theme-retro a:hover {
+        background: var(--retro-green) !important;
+        color: black !important;
+      }
+
+      /* CRT Scanline Effect for Retro */
+      .theme-retro::after {
+        content: " ";
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        z-index: 9999;
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Regras de segurança do Firestore para o Portal de Jogos SENAI
+// Cole essas regras no console do Firebase > Firestore > Regras
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Jogos: Leitura pública, escrita apenas admin autenticado
+    match /games/{gameId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+    
+    // Alunos: Leitura pública (para mostrar nomes), escrita apenas admin
+    match /students/{studentId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+    
+    // Cohorts (Turmas): Apenas leitura
+    match /cohorts/{cohortId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
