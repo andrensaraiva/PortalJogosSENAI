@@ -11,19 +11,7 @@ import {
   writeBatch,
   Timestamp 
 } from 'firebase/firestore';
-import { 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  deleteObject 
-} from 'firebase/storage';
-import { 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged,
-  User 
-} from 'firebase/auth';
-import { db, storage, auth } from './config';
+import { db } from './config';
 import { Game, Student, Review, Devlog, Cohort } from '../types';
 
 // ==================== COLLECTIONS ====================
@@ -33,10 +21,20 @@ const COHORTS_COLLECTION = 'cohorts';
 
 // ==================== GAMES ====================
 export const getGames = async (): Promise<Game[]> => {
-  const gamesRef = collection(db, GAMES_COLLECTION);
-  const q = query(gamesRef, orderBy('releaseDate', 'desc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+  try {
+    const gamesRef = collection(db, GAMES_COLLECTION);
+    const snapshot = await getDocs(gamesRef);
+    const games = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Game));
+    // Ordenar por data no cliente
+    return games.sort((a, b) => {
+      const dateA = new Date(a.releaseDate || 0);
+      const dateB = new Date(b.releaseDate || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+  } catch (error) {
+    console.error('Erro ao buscar jogos:', error);
+    return [];
+  }
 };
 
 export const getGameById = async (id: string): Promise<Game | null> => {
@@ -102,9 +100,14 @@ export const addDevlogToGame = async (gameId: string, devlog: Omit<Devlog, 'id'>
 
 // ==================== STUDENTS ====================
 export const getStudents = async (): Promise<Student[]> => {
-  const studentsRef = collection(db, STUDENTS_COLLECTION);
-  const snapshot = await getDocs(studentsRef);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
+  try {
+    const studentsRef = collection(db, STUDENTS_COLLECTION);
+    const snapshot = await getDocs(studentsRef);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Student));
+  } catch (error) {
+    console.error('Erro ao buscar alunos:', error);
+    return [];
+  }
 };
 
 export const getStudentById = async (id: string): Promise<Student | null> => {
@@ -143,49 +146,6 @@ export const getCohorts = async (): Promise<Cohort[]> => {
   const cohortsRef = collection(db, COHORTS_COLLECTION);
   const snapshot = await getDocs(cohortsRef);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Cohort));
-};
-
-// ==================== STORAGE (Images) ====================
-export const uploadImage = async (file: File, path: string): Promise<string> => {
-  const storageRef = ref(storage, path);
-  const snapshot = await uploadBytes(storageRef, file);
-  const downloadURL = await getDownloadURL(snapshot.ref);
-  return downloadURL;
-};
-
-export const uploadGameImage = async (file: File, gameId: string, type: 'cover' | 'header' | 'background' | 'screenshot'): Promise<string> => {
-  const timestamp = Date.now();
-  const extension = file.name.split('.').pop();
-  const path = `games/${gameId}/${type}_${timestamp}.${extension}`;
-  return uploadImage(file, path);
-};
-
-export const deleteImage = async (url: string): Promise<void> => {
-  try {
-    const imageRef = ref(storage, url);
-    await deleteObject(imageRef);
-  } catch (error) {
-    console.error('Error deleting image:', error);
-  }
-};
-
-// ==================== AUTHENTICATION (Admin) ====================
-export const loginAdmin = async (email: string, password: string): Promise<User | null> => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    console.error('Login error:', error);
-    return null;
-  }
-};
-
-export const logoutAdmin = async (): Promise<void> => {
-  await signOut(auth);
-};
-
-export const onAuthChange = (callback: (user: User | null) => void): (() => void) => {
-  return onAuthStateChanged(auth, callback);
 };
 
 // ==================== SEED DATA ====================

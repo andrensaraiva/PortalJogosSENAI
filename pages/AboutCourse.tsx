@@ -277,7 +277,7 @@ const AboutCourse: React.FC = () => {
             <p className="text-blue-100 mb-8 max-w-2xl mx-auto">
                Garanta seu diploma de Técnico em Programação de Jogos Digitais e entre para o ranking dos melhores profissionais do ES.
             </p>
-            <a href="#" className="inline-block bg-white text-senai-blue hover:bg-gray-100 px-10 py-4 font-bold uppercase tracking-widest rounded shadow-[0_10px_20px_rgba(0,0,0,0.2)] transition-transform hover:-translate-y-1">
+            <a href="https://loja.senaies.com.br/curso/tecnico-em-programacao-de-jogos-digitais/21425288-vitoria-porto-3-20-620-HTC-PJD-1-01" target="_blank" rel="noopener noreferrer" className="inline-block bg-white text-senai-blue hover:bg-gray-100 px-10 py-4 font-bold uppercase tracking-widest rounded shadow-[0_10px_20px_rgba(0,0,0,0.2)] transition-transform hover:-translate-y-1">
                Acessar Portal de Matrículas
             </a>
          </div>

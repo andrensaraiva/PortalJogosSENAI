@@ -1,14 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getAuth } from 'firebase/auth';
 
 // Firebase configuration
 // IMPORTANTE: Substitua esses valores pelos do seu projeto Firebase
-// 1. Acesse https://console.firebase.google.com/
-// 2. Crie um novo projeto
-// 3. Adicione um app Web
-// 4. Copie as credenciais para cá
+// Não precisa de Storage (usamos links de imagem) nem Auth (você é o admin)
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "YOUR_API_KEY",
@@ -22,9 +17,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize services
+// Initialize Firestore only (sem Storage/Auth)
 export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const auth = getAuth(app);
 
 export default app;

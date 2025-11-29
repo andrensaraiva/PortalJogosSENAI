@@ -18,7 +18,7 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await loginAdmin(user, pass);
+      const success = loginAdmin(user, pass);
       if (success) {
         navigate('/admin/dashboard');
       } else {
@@ -49,7 +49,7 @@ const AdminLogin: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-4 relative z-10">
           <div>
-            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Credencial</label>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Usuário</label>
             <input 
               type="text" 
               value={user}
@@ -59,7 +59,7 @@ const AdminLogin: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Chave de Segurança</label>
+            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Senha</label>
             <input 
               type="password" 
               value={pass}

@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Play, Monitor, Share2, Flag, ThumbsUp, ThumbsDown, MessageSquare, Box, Container, Presentation, Smartphone, PenTool, User, PlusCircle, Settings } from 'lucide-react';
+import { Play, Monitor, Share2, Flag, ThumbsUp, ThumbsDown, MessageSquare, Box, Container, Presentation, Smartphone, PenTool, User, PlusCircle, Settings, ExternalLink } from 'lucide-react';
 import { useGames } from '../context/GameContext';
 import { Game, Student } from '../types';
 
 const GamePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { games, submitReview, getStudentById, addDevlog, isAdmin } = useGames();
+  const { games, submitReview, getStudentById, isAdmin } = useGames();
   const [game, setGame] = useState<Game | undefined>(undefined);
   const [activeMedia, setActiveMedia] = useState<string | null>(null);
   const [isPlayingWebBuild, setIsPlayingWebBuild] = useState(false);
@@ -18,12 +18,6 @@ const GamePage: React.FC = () => {
   const [reviewContent, setReviewContent] = useState('');
   const [reviewRecommended, setReviewRecommended] = useState<boolean | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
-
-  // Devlog Form State
-  const [showAddDevlog, setShowAddDevlog] = useState(false);
-  const [newDevlogTitle, setNewDevlogTitle] = useState('');
-  const [newDevlogContent, setNewDevlogContent] = useState('');
-  const [newDevlogTags, setNewDevlogTags] = useState('');
 
   useEffect(() => {
     const foundGame = games.find((g) => g.id === id);
@@ -61,27 +55,6 @@ const GamePage: React.FC = () => {
     setReviewContent('');
     setReviewRecommended(null);
     setShowReviewForm(false);
-  };
-
-  const handleAddDevlog = (e: React.FormEvent) => {
-      e.preventDefault();
-      if(!newDevlogTitle || !newDevlogContent) return;
-
-      // In a real app, authorId would come from auth context. Using first team member for now.
-      const authorId = game.teamIds[0] || 's1'; 
-
-      addDevlog(game.id, {
-          title: newDevlogTitle,
-          content: newDevlogContent,
-          authorId: authorId,
-          tags: newDevlogTags.split(',').map(t => t.trim()).filter(t => t),
-          date: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-      });
-
-      setNewDevlogTitle('');
-      setNewDevlogContent('');
-      setNewDevlogTags('');
-      setShowAddDevlog(false);
   };
 
   // Calculate positive %
@@ -222,48 +195,15 @@ const GamePage: React.FC = () => {
                     <h2 className="text-xl font-display font-bold text-white uppercase tracking-wider flex items-center gap-2">
                         <PenTool size={20} className="text-senai-blue" /> Diário de Bordo (Devlogs)
                     </h2>
-                    {!showAddDevlog && (
-                        <button 
-                            onClick={() => setShowAddDevlog(true)}
+                    {isAdmin && (
+                        <Link 
+                            to={`/edit/${game.id}`}
                             className="text-xs bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded uppercase font-bold flex items-center gap-2 border border-gray-600 transition-colors"
                         >
-                            <PlusCircle size={14} /> Nova Atualização
-                        </button>
+                            <PlusCircle size={14} /> Gerenciar Devlogs
+                        </Link>
                     )}
                 </div>
-
-                {showAddDevlog && (
-                    <div className="mb-8 bg-gray-800/50 p-4 rounded border border-dashed border-gray-600 animate-fade-in">
-                        <h3 className="text-sm text-white font-bold mb-3 uppercase">Registrar Progresso</h3>
-                        <form onSubmit={handleAddDevlog} className="space-y-3">
-                            <input 
-                                type="text" 
-                                placeholder="Título da Atualização" 
-                                value={newDevlogTitle}
-                                onChange={(e) => setNewDevlogTitle(e.target.value)}
-                                className="w-full bg-black/40 border border-gray-600 p-2 text-white text-xs focus:border-senai-blue outline-none"
-                            />
-                            <textarea 
-                                placeholder="Detalhes do que foi feito..." 
-                                rows={3}
-                                value={newDevlogContent}
-                                onChange={(e) => setNewDevlogContent(e.target.value)}
-                                className="w-full bg-black/40 border border-gray-600 p-2 text-white text-xs focus:border-senai-blue outline-none"
-                            />
-                            <input 
-                                type="text" 
-                                placeholder="Tags (separadas por vírgula): #Arte, #BugFix" 
-                                value={newDevlogTags}
-                                onChange={(e) => setNewDevlogTags(e.target.value)}
-                                className="w-full bg-black/40 border border-gray-600 p-2 text-white text-xs focus:border-senai-blue outline-none"
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button type="button" onClick={() => setShowAddDevlog(false)} className="text-xs text-gray-400 hover:text-white px-3 py-2">Cancelar</button>
-                                <button type="submit" className="text-xs bg-senai-blue text-white px-4 py-2 font-bold uppercase rounded">Publicar</button>
-                            </div>
-                        </form>
-                    </div>
-                )}
 
                 <div className="space-y-6 relative border-l border-gray-700 ml-3 pl-6">
                     {game.devlogs && game.devlogs.length > 0 ? (
@@ -274,7 +214,54 @@ const GamePage: React.FC = () => {
                                     <h3 className="font-bold text-white text-sm">{log.title}</h3>
                                     <span className="text-[10px] text-gray-500 font-mono bg-gray-800 px-2 py-0.5 rounded">{log.date}</span>
                                 </div>
-                                <p className="text-gray-400 text-sm mb-2">{log.content}</p>
+                                <p className="text-gray-400 text-sm mb-2 whitespace-pre-wrap">{log.content}</p>
+                                
+                                {/* Mídia do Devlog */}
+                                {log.media && log.media.length > 0 && (
+                                  <div className="space-y-3 my-3">
+                                    {log.media.map((media, idx) => (
+                                      <div key={idx} className="rounded overflow-hidden">
+                                        {media.type === 'image' || media.type === 'gif' ? (
+                                          <div>
+                                            <img 
+                                              src={media.url} 
+                                              alt={media.caption || 'Imagem do devlog'} 
+                                              className="w-full max-w-lg rounded border border-gray-700"
+                                            />
+                                            {media.caption && (
+                                              <p className="text-xs text-gray-500 mt-1 italic">{media.caption}</p>
+                                            )}
+                                          </div>
+                                        ) : media.type === 'video' ? (
+                                          <div>
+                                            <div className="aspect-video max-w-lg">
+                                              <iframe 
+                                                src={media.url} 
+                                                className="w-full h-full rounded border border-gray-700"
+                                                allowFullScreen
+                                                title={media.caption || 'Vídeo do devlog'}
+                                              />
+                                            </div>
+                                            {media.caption && (
+                                              <p className="text-xs text-gray-500 mt-1 italic">{media.caption}</p>
+                                            )}
+                                          </div>
+                                        ) : media.type === 'link' ? (
+                                          <a 
+                                            href={media.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 text-senai-blue hover:text-white text-sm bg-senai-blue/10 hover:bg-senai-blue/20 px-3 py-2 rounded transition-colors"
+                                          >
+                                            <ExternalLink size={14}/>
+                                            {media.caption || media.url}
+                                          </a>
+                                        ) : null}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                
                                 <div className="flex gap-2">
                                     {log.tags.map(tag => (
                                         <span key={tag} className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">#{tag.trim()}</span>
@@ -436,12 +423,34 @@ const GamePage: React.FC = () => {
                    )}
                    
                    <div className="grid grid-cols-2 gap-2">
-                        <a href={game.downloadLinks.windows || '#'} className={`flex items-center justify-center gap-2 py-3 bg-[#2a3b55] hover:bg-[#3b4f6e] text-white text-sm font-bold uppercase transition-colors border border-transparent hover:border-senai-blue ${!game.downloadLinks.windows && 'opacity-50 cursor-not-allowed'}`}>
-                           <Monitor size={16} /> Windows
-                        </a>
-                        <a href={game.downloadLinks.android || '#'} className={`flex items-center justify-center gap-2 py-3 bg-[#2a3b55] hover:bg-[#3b4f6e] text-white text-sm font-bold uppercase transition-colors border border-transparent hover:border-senai-blue ${!game.downloadLinks.android && 'opacity-50 cursor-not-allowed'}`}>
-                           <Smartphone size={16} /> Android
-                        </a>
+                        {game.downloadLinks.windows ? (
+                          <a 
+                            href={game.downloadLinks.windows} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 py-3 bg-[#2a3b55] hover:bg-[#3b4f6e] text-white text-sm font-bold uppercase transition-colors border border-transparent hover:border-senai-blue"
+                          >
+                            <Monitor size={16} /> Windows
+                          </a>
+                        ) : (
+                          <span className="flex items-center justify-center gap-2 py-3 bg-[#2a3b55] text-white text-sm font-bold uppercase opacity-50 cursor-not-allowed">
+                            <Monitor size={16} /> Windows
+                          </span>
+                        )}
+                        {game.downloadLinks.android ? (
+                          <a 
+                            href={game.downloadLinks.android} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 py-3 bg-[#2a3b55] hover:bg-[#3b4f6e] text-white text-sm font-bold uppercase transition-colors border border-transparent hover:border-senai-blue"
+                          >
+                            <Smartphone size={16} /> Android
+                          </a>
+                        ) : (
+                          <span className="flex items-center justify-center gap-2 py-3 bg-[#2a3b55] text-white text-sm font-bold uppercase opacity-50 cursor-not-allowed">
+                            <Smartphone size={16} /> Android
+                          </span>
+                        )}
                    </div>
                </div>
 

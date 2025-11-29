@@ -1,5 +1,5 @@
-import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
@@ -12,6 +12,17 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import { GameProvider, useGames } from './context/GameContext';
 
+// Componente que rola para o topo quando muda de página
+const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  
+  return null;
+};
+
 const AppContent: React.FC = () => {
   const { theme, loading } = useGames();
   
@@ -21,6 +32,7 @@ const AppContent: React.FC = () => {
   
   return (
     <div className={`flex flex-col min-h-screen transition-colors duration-500 ${theme === 'retro' ? 'theme-retro' : 'theme-porto'}`}>
+      <ScrollToTop />
       <Navbar />
       <div className="flex-grow">
         <Routes>

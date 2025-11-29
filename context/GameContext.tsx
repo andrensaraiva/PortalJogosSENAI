@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { Game, Review, Student, Devlog, Cohort } from '../types';
 import { MOCK_GAMES, MOCK_STUDENTS, COHORTS } from '../constants';
-import { User } from 'firebase/auth';
 import {
   getGames,
   getStudents,
@@ -13,37 +12,25 @@ import {
   deleteStudentFromDb,
   addReviewToGame,
   addDevlogToGame,
-  uploadGameImage,
-  loginAdmin as firebaseLoginAdmin,
-  logoutAdmin as firebaseLogoutAdmin,
-  onAuthChange,
   seedInitialData
 } from '../firebase/services';
 
 type Theme = 'porto' | 'retro';
-
-export interface GameImages {
-  cover?: File;
-  header?: File;
-  background?: File;
-  screenshots?: File[];
-}
 
 interface GameContextType {
   games: Game[];
   students: Student[];
   cohorts: Cohort[];
   isAdmin: boolean;
-  adminUser: User | null;
   theme: Theme;
   loading: boolean;
   error: string | null;
   toggleTheme: () => void;
-  loginAdmin: (email: string, password: string) => Promise<boolean>;
-  logoutAdmin: () => Promise<void>;
+  loginAdmin: (username: string, password: string) => boolean;
+  logoutAdmin: () => void;
   loginStudent: (username: string, password: string) => Student | null;
-  addGame: (game: Omit<Game, 'id'>, images?: GameImages) => Promise<string | null>;
-  updateGame: (game: Game, images?: GameImages) => Promise<boolean>;
+  addGame: (game: Omit<Game, 'id'>) => Promise<string | null>;
+  updateGame: (game: Game) => Promise<boolean>;
   deleteGame: (gameId: string) => Promise<boolean>;
   registerStudent: (student: Omit<Student, 'id'>) => Promise<string | null>;
   updateStudent: (student: Student) => Promise<boolean>;
@@ -68,8 +55,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [games, setGames] = useState<Game[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [cohorts] = useState<Cohort[]>(COHORTS);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminUser, setAdminUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    // Recupera estado do admin do localStorage
+    return localStorage.getItem('senai-admin') === 'true';
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [useFirebase] = useState(isFirebaseConfigured());
@@ -117,15 +106,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     loadData();
-    
-    if (useFirebase) {
-      const unsubscribe = onAuthChange((user) => {
-        setAdminUser(user);
-        setIsAdmin(!!user);
-      });
-      return () => unsubscribe();
-    }
-  }, [loadData, useFirebase]);
+  }, [loadData]);
 
   useEffect(() => {
     localStorage.setItem('senai-game-port-theme', theme);
@@ -135,31 +116,20 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setTheme(prev => prev === 'porto' ? 'retro' : 'porto');
   };
 
-  // ==================== ADMIN AUTH ====================
-  const loginAdmin = async (email: string, password: string): Promise<boolean> => {
-    if (useFirebase) {
-      const user = await firebaseLoginAdmin(email, password);
-      if (user) {
-        setAdminUser(user);
-        setIsAdmin(true);
-        return true;
-      }
-      return false;
-    } else {
-      if (email === 'admin' && password === 'senai123') {
-        setIsAdmin(true);
-        return true;
-      }
-      return false;
+  // ==================== ADMIN AUTH (Simples - sem Firebase Auth) ====================
+  const loginAdmin = (username: string, password: string): boolean => {
+    // Credenciais do admin - você pode alterar aqui
+    if (username === 'admin' && password === 'senai123') {
+      setIsAdmin(true);
+      localStorage.setItem('senai-admin', 'true');
+      return true;
     }
+    return false;
   };
 
-  const logoutAdmin = async (): Promise<void> => {
-    if (useFirebase) {
-      await firebaseLogoutAdmin();
-    }
-    setAdminUser(null);
+  const logoutAdmin = (): void => {
     setIsAdmin(false);
+    localStorage.removeItem('senai-admin');
   };
 
   const loginStudent = (username: string, pass: string): Student | null => {
@@ -168,40 +138,15 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ==================== GAMES CRUD ====================
-  const addGame = async (gameData: Omit<Game, 'id'>, images?: GameImages): Promise<string | null> => {
+  const addGame = async (gameData: Omit<Game, 'id'>): Promise<string | null> => {
     try {
-      let game = { ...gameData };
-      
       if (useFirebase) {
-        const gameId = await addGameToDb(game);
-        
-        if (images) {
-          if (images.cover) {
-            game.coverImage = await uploadGameImage(images.cover, gameId, 'cover');
-          }
-          if (images.header) {
-            game.headerImage = await uploadGameImage(images.header, gameId, 'header');
-          }
-          if (images.background) {
-            game.backgroundImage = await uploadGameImage(images.background, gameId, 'background');
-          }
-          if (images.screenshots && images.screenshots.length > 0) {
-            const screenshotUrls = await Promise.all(
-              images.screenshots.map((file) => 
-                uploadGameImage(file, gameId, 'screenshot')
-              )
-            );
-            game.screenshots = screenshotUrls;
-          }
-          
-          await updateGameInDb(gameId, game);
-        }
-        
+        const gameId = await addGameToDb(gameData);
         await loadData();
         return gameId;
       } else {
         const newGame: Game = {
-          ...game,
+          ...gameData,
           id: `game-${Date.now()}`
         };
         setGames(prev => [newGame, ...prev]);
@@ -214,30 +159,10 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateGame = async (updatedGame: Game, images?: GameImages): Promise<boolean> => {
+  const updateGame = async (updatedGame: Game): Promise<boolean> => {
     try {
       if (useFirebase) {
-        let game = { ...updatedGame };
-        
-        if (images) {
-          if (images.cover) {
-            game.coverImage = await uploadGameImage(images.cover, game.id, 'cover');
-          }
-          if (images.header) {
-            game.headerImage = await uploadGameImage(images.header, game.id, 'header');
-          }
-          if (images.background) {
-            game.backgroundImage = await uploadGameImage(images.background, game.id, 'background');
-          }
-          if (images.screenshots && images.screenshots.length > 0) {
-            const screenshotUrls = await Promise.all(
-              images.screenshots.map(file => uploadGameImage(file, game.id, 'screenshot'))
-            );
-            game.screenshots = [...game.screenshots, ...screenshotUrls];
-          }
-        }
-        
-        await updateGameInDb(game.id, game);
+        await updateGameInDb(updatedGame.id, updatedGame);
         await loadData();
         return true;
       } else {
@@ -408,7 +333,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       students, 
       cohorts,
       isAdmin, 
-      adminUser,
       theme, 
       loading,
       error,

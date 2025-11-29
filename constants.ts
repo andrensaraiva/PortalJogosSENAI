@@ -9,10 +9,10 @@ export const COHORTS: Cohort[] = [
 ];
 
 export const MOCK_STUDENTS: Student[] = [
-  { id: 's1', name: 'João Silva', role: 'Programador', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix', username: 'joao', password: '123' },
-  { id: 's2', name: 'Maria Souza', role: 'Artista 2D', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka', username: 'maria', password: '123' },
-  { id: 's3', name: 'Carlos Oliveira', role: 'Game Designer', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob', username: 'carlos', password: '123' },
-  { id: 's4', name: 'Ana Costa', role: 'Sound Designer', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Milo', username: 'ana', password: '123' },
+  { id: 's1', name: 'João Silva', role: 'Programador', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix', username: 'joao', password: '123', cohortId: '2024-1-A' },
+  { id: 's2', name: 'Maria Souza', role: 'Artista 2D', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka', username: 'maria', password: '123', cohortId: '2024-1-A' },
+  { id: 's3', name: 'Carlos Oliveira', role: 'Game Designer', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob', username: 'carlos', password: '123', cohortId: '2024-1-B' },
+  { id: 's4', name: 'Ana Costa', role: 'Sound Designer', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Milo', username: 'ana', password: '123', cohortId: '2023-2' },
 ];
 
 export const MOCK_GAMES: Game[] = [

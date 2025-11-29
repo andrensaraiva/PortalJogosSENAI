@@ -22,6 +22,13 @@ export interface Student {
   avatarUrl?: string;
   username: string; // New: Login ID
   password?: string; // New: Login Password (optional in interface to avoid leaking in UI lists, but used in logic)
+  cohortId?: string; // Turma do aluno
+}
+
+export interface DevlogMedia {
+  type: 'image' | 'gif' | 'video' | 'link';
+  url: string;
+  caption?: string;
 }
 
 export interface Devlog {
@@ -31,6 +38,7 @@ export interface Devlog {
   title: string;
   content: string;
   tags: string[]; // e.g., "Art", "Code", "Fix"
+  media?: DevlogMedia[]; // Imagens, GIFs, vídeos e links
 }
 
 export interface Game {
