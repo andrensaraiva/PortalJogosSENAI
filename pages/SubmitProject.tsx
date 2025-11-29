@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Link2, Image as ImageIcon, CheckCircle, Video, UserPlus, Users, Monitor, Smartphone, PenTool, AlertTriangle, Container, Presentation, Lock, FileCode, Save, HelpCircle, X, Plus, Trash2, ExternalLink, Film, ImagePlay } from 'lucide-react';
+import { Link2, Image as ImageIcon, CheckCircle, Video, UserPlus, Users, Monitor, Smartphone, PenTool, AlertTriangle, Container, Presentation, Lock, FileCode, Save, HelpCircle, X, Plus, Trash2, ExternalLink, Film, ImagePlay, Key, Loader2 } from 'lucide-react';
 import { COHORTS } from '../constants';
 import { useGames } from '../context/GameContext';
 import { Game, Student, Devlog, DevlogMedia } from '../types';
@@ -9,7 +9,7 @@ import { Game, Student, Devlog, DevlogMedia } from '../types';
 const SubmitProject: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>(); // Check if editing
-  const { addGame, updateGame, games, students, loginStudent, isAdmin } = useGames();
+  const { addGame, updateGame, games, students, loginStudent, isAdmin, changeStudentPassword } = useGames();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const isEditMode = !!id;
@@ -22,6 +22,17 @@ const SubmitProject: React.FC = () => {
 
   // Modal de Ajuda
   const [showHelpModal, setShowHelpModal] = useState<'images' | 'files' | null>(null);
+
+  // Modal de Alteração de Senha
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // Determina se precisa mostrar o login
   // Admin não precisa, quem está editando não precisa, quem já logou não precisa
@@ -198,6 +209,62 @@ const SubmitProject: React.FC = () => {
       }
   };
 
+  // Função para alterar senha
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    
+    // Validações
+    if (!passwordForm.currentPassword) {
+      setPasswordError('Digite sua senha atual.');
+      return;
+    }
+    
+    if (!passwordForm.newPassword) {
+      setPasswordError('Digite a nova senha.');
+      return;
+    }
+    
+    if (passwordForm.newPassword.length < 3) {
+      setPasswordError('A nova senha deve ter pelo menos 3 caracteres.');
+      return;
+    }
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('As senhas não coincidem.');
+      return;
+    }
+    
+    if (!currentUser) {
+      setPasswordError('Você precisa estar logado.');
+      return;
+    }
+    
+    setIsChangingPassword(true);
+    
+    const result = await changeStudentPassword(
+      currentUser.id,
+      passwordForm.currentPassword,
+      passwordForm.newPassword
+    );
+    
+    setIsChangingPassword(false);
+    
+    if (result.success) {
+      setPasswordSuccess(true);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      // Atualiza o currentUser com a nova senha
+      setCurrentUser(prev => prev ? { ...prev, password: passwordForm.newPassword } : null);
+      // Fecha o modal após 2 segundos
+      setTimeout(() => {
+        setShowChangePasswordModal(false);
+        setPasswordSuccess(false);
+      }, 2000);
+    } else {
+      setPasswordError(result.error || 'Erro ao alterar senha.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Precisa estar logado como admin OU como aluno para enviar
@@ -325,6 +392,108 @@ const SubmitProject: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-12 bg-[#050b14] font-sans">
+      
+      {/* MODAL DE ALTERAÇÃO DE SENHA */}
+      {showChangePasswordModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#121824] border border-senai-blue/30 p-6 rounded-lg max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-display font-bold text-white uppercase flex items-center gap-2">
+                <Key className="text-senai-blue" size={20} />
+                Alterar Senha
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowChangePasswordModal(false);
+                  setPasswordError(null);
+                  setPasswordSuccess(false);
+                  setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {passwordSuccess ? (
+              <div className="text-center py-8">
+                <CheckCircle className="mx-auto text-green-500 w-16 h-16 mb-4" />
+                <p className="text-green-400 text-lg font-bold">Senha alterada com sucesso!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs uppercase font-bold text-gray-500 block mb-1">Senha Atual</label>
+                  <input 
+                    type="password" 
+                    className="w-full bg-black/40 border border-gray-700 p-3 text-white focus:border-senai-blue outline-none rounded"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Digite sua senha atual"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase font-bold text-gray-500 block mb-1">Nova Senha</label>
+                  <input 
+                    type="password" 
+                    className="w-full bg-black/40 border border-gray-700 p-3 text-white focus:border-senai-blue outline-none rounded"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Digite a nova senha (mín. 3 caracteres)"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase font-bold text-gray-500 block mb-1">Confirmar Nova Senha</label>
+                  <input 
+                    type="password" 
+                    className="w-full bg-black/40 border border-gray-700 p-3 text-white focus:border-senai-blue outline-none rounded"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Confirme a nova senha"
+                  />
+                </div>
+                
+                {passwordError && (
+                  <div className="text-red-500 text-xs text-center border border-red-500/20 bg-red-500/10 p-2 rounded">
+                    {passwordError}
+                  </div>
+                )}
+                
+                <div className="flex gap-3 pt-2">
+                  <button 
+                    onClick={() => {
+                      setShowChangePasswordModal(false);
+                      setPasswordError(null);
+                      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                    }}
+                    className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold uppercase rounded text-sm transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword}
+                    className="flex-1 py-3 bg-senai-blue hover:bg-white hover:text-senai-blue text-white font-bold uppercase rounded text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isChangingPassword ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} />
+                        Salvar
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-5xl mx-auto px-4 py-8">
         
         <div className="mb-8 border-b-2 border-senai-blue pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -334,10 +503,19 @@ const SubmitProject: React.FC = () => {
               {isEditMode ? 'Editar Manifesto (Projeto)' : 'Registro de Carga (Novo Projeto)'}
             </h1>
             {!isEditMode && currentUser && (
-                <p className="text-gray-400 mt-2 font-mono text-xs flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                LOGADO COMO: <span className="text-white font-bold">{currentUser.name}</span> ({currentUser.role})
-                </p>
+                <div className="flex items-center gap-4">
+                  <p className="text-gray-400 mt-2 font-mono text-xs flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    LOGADO COMO: <span className="text-white font-bold">{currentUser.name}</span> ({currentUser.role})
+                  </p>
+                  <button
+                    onClick={() => setShowChangePasswordModal(true)}
+                    className="mt-2 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded flex items-center gap-1 transition-colors"
+                    title="Alterar senha"
+                  >
+                    <Key size={12} /> Alterar Senha
+                  </button>
+                </div>
             )}
             {isEditMode && isAdmin && (
                 <p className="text-red-400 mt-2 font-mono text-xs flex items-center gap-2">

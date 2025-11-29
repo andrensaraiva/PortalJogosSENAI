@@ -35,6 +35,7 @@ interface GameContextType {
   registerStudent: (student: Omit<Student, 'id'>) => Promise<string | null>;
   updateStudent: (student: Student) => Promise<boolean>;
   deleteStudent: (studentId: string) => Promise<boolean>;
+  changeStudentPassword: (studentId: string, currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   submitReview: (gameId: string, review: Omit<Review, 'id' | 'date'>) => Promise<boolean>;
   addDevlog: (gameId: string, devlog: Omit<Devlog, 'id'>) => Promise<boolean>;
   getStudentById: (id: string) => Student | undefined;
@@ -246,6 +247,47 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // ==================== ALTERAR SENHA DO ALUNO ====================
+  const changeStudentPassword = async (
+    studentId: string, 
+    currentPassword: string, 
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Encontrar o aluno
+      const student = students.find(s => s.id === studentId);
+      
+      if (!student) {
+        return { success: false, error: 'Aluno não encontrado.' };
+      }
+      
+      // Verificar senha atual
+      if (student.password !== currentPassword) {
+        return { success: false, error: 'Senha atual incorreta.' };
+      }
+      
+      // Validar nova senha
+      if (newPassword.length < 3) {
+        return { success: false, error: 'A nova senha deve ter pelo menos 3 caracteres.' };
+      }
+      
+      // Atualizar senha
+      const updatedStudent = { ...student, password: newPassword };
+      
+      if (useFirebase) {
+        await updateStudentInDb(studentId, { password: newPassword });
+        await loadData();
+      } else {
+        setStudents(prev => prev.map(s => s.id === studentId ? updatedStudent : s));
+      }
+      
+      return { success: true };
+    } catch (err) {
+      console.error('Erro ao alterar senha:', err);
+      return { success: false, error: 'Erro ao alterar senha. Tente novamente.' };
+    }
+  };
+
   // ==================== REVIEWS & DEVLOGS ====================
   const submitReview = async (gameId: string, reviewData: Omit<Review, 'id' | 'date'>): Promise<boolean> => {
     try {
@@ -346,6 +388,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       registerStudent, 
       updateStudent, 
       deleteStudent,
+      changeStudentPassword,
       submitReview, 
       addDevlog, 
       getStudentById, 
